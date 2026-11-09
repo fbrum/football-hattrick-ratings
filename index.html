@@ -5,316 +5,599 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hattrick Friend Card Creator</title>
     <!-- Chart.js for the Radar Chart -->
-    <script src="https://jsdelivr.net"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
-            --bg-color: #f3f4f6;
-            --card-bg: #ffffff;
-            --primary: #1e3a8a;
-            --primary-light: #3b82f6;
-            --text: #1f2937;
-            --border: #e5e7eb;
+            --bg-dark: #0f172a;
+            --card-bg: #1e293b;
+            --input-bg: #0f172a;
+            --primary-blue: #3b82f6;
+            --text-light: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: #334155;
+            --accent-yellow: #f59e0b;
         }
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-light);
             margin: 0;
             padding: 20px;
             display: flex;
             justify-content: center;
         }
-        .container {
-            max-width: 1000px;
-            width: 100%;
+
+        .layout-container {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-        }
-        @media (max-width: 768px) {
-            .container { grid-template-columns: 1fr; }
-        }
-        .panel {
-            background: var(--card-bg);
-            padding: 25px;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-        }
-        h2 { margin-top: 0; color: var(--primary); border-bottom: 2px solid var(--border); padding-bottom: 10px; }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 0.9rem; }
-        input[type="text"], select {
+            grid-template-columns: 280px 1fr;
+            gap: 25px;
+            max-width: 1200px;
             width: 100%;
-            padding: 10px;
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            box-sizing: border-box;
-            font-size: 1rem;
         }
-        .slider-container {
+
+        @media (max-width: 950px) {
+            .layout-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .panel {
+            background-color: var(--card-bg);
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border-color);
+        }
+
+        /* Sidebar / Roster Styles */
+        .sidebar {
             display: flex;
-            align-items: center;
+            flex-direction: column;
             gap: 15px;
-            margin-bottom: 12px;
         }
-        .slider-container label { width: 100px; margin-bottom: 0; }
-        input[type="range"] { flex: 1; accent-color: var(--primary-light); }
-        .val-badge {
-            width: 30px;
-            text-align: center;
-            font-weight: bold;
-            background: var(--bg-color);
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 0.85rem;
+
+        .sidebar h2 {
+            font-size: 1.2rem;
+            margin: 0;
+            color: var(--primary-blue);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
         }
-        .btn-group { display: flex; gap: 10px; margin-top: 20px; }
-        button {
-            flex: 1;
+
+        .roster-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 450px;
+            overflow-y: auto;
+        }
+
+        .roster-item {
+            background-color: var(--input-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
             padding: 12px;
-            border: none;
-            border-radius: 6px;
-            font-weight: bold;
             cursor: pointer;
-            transition: background 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.2s ease;
+        }
+
+        .roster-item:hover, .roster-item.active {
+            border-color: var(--primary-blue);
+            background-color: rgba(59, 130, 246, 0.1);
+        }
+
+        .roster-item .name-label {
+            font-weight: bold;
             font-size: 0.95rem;
         }
-        .btn-primary { background: var(--primary); color: white; }
-        .btn-primary:hover { background: #111827; }
-        .btn-secondary { background: #9ca3af; color: white; }
-        .btn-secondary:hover { background: #4b5563; }
-        #file-input { display: none; }
-        
-        /* Card Display Styling */
+
+        .roster-item .role-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        /* Editor & Preview Workspace split */
+        .workspace {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+        }
+
+        @media (max-width: 768px) {
+            .workspace {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Card Preview Display elements */
         .card-preview {
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-            text-align: center;
+            justify-content: flex-start;
         }
-        .player-header { margin-bottom: 20px; }
-        .player-name { font-size: 2rem; font-weight: 800; margin: 0; color: var(--primary); }
-        .player-role { font-size: 1.1rem; color: #6b7280; font-weight: 500; text-transform: uppercase; letter-spacing: 1px; }
-        .star-rating {
-            font-size: 1.5rem;
-            color: #f59e0b;
-            margin-top: 5px;
-            font-weight: bold;
-        }
-        .chart-wrapper {
+
+        .card-face {
+            background-color: var(--input-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
             width: 100%;
-            max-width: 360px;
-            margin-top: 10px;
+            max-width: 320px;
+            padding: 25px;
+            box-sizing: border-box;
+            text-align: center;
+            margin-bottom: 20px;
         }
+
+        .avatar-placeholder {
+            width: 80px;
+            height: 80px;
+            background-color: #334155;
+            border-radius: 50%;
+            margin: 0 auto 15px auto;
+        }
+
+        .p-name {
+            font-size: 1.6rem;
+            font-weight: 800;
+            margin: 0 0 5px 0;
+        }
+
+        .p-role {
+            font-size: 0.9rem;
+            color: var(--primary-blue);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 15px;
+        }
+
+        .star-container {
+            font-size: 1.4rem;
+            color: var(--accent-yellow);
+        }
+
+        .quick-metrics {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            width: 100%;
+            border-top: 1px solid var(--border-color);
+            margin-top: 20px;
+            padding-top: 15px;
+        }
+
+        .metric-box {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .metric-box div:last-child {
+            font-size: 0.95rem;
+            color: var(--text-light);
+            font-weight: bold;
+            margin-top: 3px;
+        }
+
+        .chart-container {
+            width: 100%;
+            max-width: 340px;
+        }
+
+        /* Controls / Form input styling */
+        .editor-panel h2 {
+            margin-top: 0;
+            font-size: 1.4rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+
+        .input-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+
+        input[type="text"], select {
+            width: 100%;
+            background-color: var(--input-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-light);
+            padding: 10px 12px;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 0.95rem;
+        }
+
+        .sliders-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        @media (max-width: 450px) {
+            .sliders-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .slider-group {
+            margin-bottom: 12px;
+        }
+
+        .slider-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            margin-bottom: 4px;
+        }
+
+        .stat-name { font-weight: 500; }
+        .stat-desc { color: var(--primary-blue); font-weight: bold; }
+
+        .slider-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        input[type="range"] {
+            flex: 1;
+            accent-color: var(--primary-blue);
+            background: var(--border-color);
+            height: 6px;
+            border-radius: 3px;
+            outline: none;
+        }
+
+        .num-counter {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            min-width: 42px;
+            text-align: right;
+        }
+
+        /* Action Buttons */
+        button {
+            padding: 10px 14px;
+            border-radius: 8px;
+            border: none;
+            font-weight: bold;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+
+        .btn-add { background-color: var(--primary-blue); color: white; width: 100%; }
+        .btn-add:hover { background-color: #2563eb; }
+        
+        .io-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: auto;
+            border-top: 1px solid var(--border-color);
+            padding-top: 15px;
+        }
+
+        .btn-io { background-color: #475569; color: white; }
+        .btn-io:hover { background-color: #334155; }
+        .btn-del { background-color: #ef4444; color: white; width: 100%; margin-top: 20px; }
+        .btn-del:hover { background-color: #dc2626; }
+        #file-input { display: none; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <!-- Left Panel: Controls -->
-    <div class="panel">
-        <h2>Player Attributes</h2>
+<div class="layout-container">
+    <!-- Roster Sidebar -->
+    <div class="panel sidebar">
+        <h2>Squad Roster</h2>
+        <div class="roster-list" id="rosterList"></div>
+        <button class="btn-add" onclick="addNewPlayer()">+ Add Friend</button>
         
-        <div class="form-group">
-            <label for="name">Friend's Name</label>
-            <input type="text" id="name" value="Striker Legend" oninput="updateCard()">
-        </div>
-
-        <div class="form-group">
-            <label for="position">Preferred Position</label>
-            <select id="position" onchange="updateCard()">
-                <option value="Keeper">Keeper</option>
-                <option value="Defender">Central Defender</option>
-                <option value="Midfielder" selected>Inner Midfielder</option>
-                <option value="Winger">Winger</option>
-                <option value="Forward">Forward</option>
-            </select>
-        </div>
-
-        <h3 style="font-size: 1rem; margin-top: 20px; color: #4b5563;">Skills (1 - 20)</h3>
-        
-        <div class="skills-list">
-            <div class="slider-container">
-                <label>Playmaking</label>
-                <input type="range" id="playmaking" min="1" max="20" value="14" oninput="updateCard()">
-                <span class="val-badge" id="playmaking-val">14</span>
-            </div>
-            <div class="slider-container">
-                <label>Defending</label>
-                <input type="range" id="defending" min="1" max="20" value="10" oninput="updateCard()">
-                <span class="val-badge" id="defending-val">10</span>
-            </div>
-            <div class="slider-container">
-                <label>Scoring</label>
-                <input type="range" id="scoring" min="1" max="20" value="8" oninput="updateCard()">
-                <span class="val-badge" id="scoring-val">8</span>
-            </div>
-            <div class="slider-container">
-                <label>Winger</label>
-                <input type="range" id="winger" min="1" max="20" value="12" oninput="updateCard()">
-                <span class="val-badge" id="winger-val">12</span>
-            </div>
-            <div class="slider-container">
-                <label>Passing</label>
-                <input type="range" id="passing" min="1" max="20" value="11" oninput="updateCard()">
-                <span class="val-badge" id="passing-val">11</span>
-            </div>
-            <div class="slider-container">
-                <label>Goalkeeping</label>
-                <input type="range" id="goalkeeping" min="1" max="20" value="1" oninput="updateCard()">
-                <span class="val-badge" id="goalkeeping-val">1</span>
-            </div>
-            <div class="slider-container">
-                <label>Stamina</label>
-                <input type="range" id="stamina" min="1" max="20" value="15" oninput="updateCard()">
-                <span class="val-badge" id="stamina-val">15</span>
-            </div>
-        </div>
-
-        <div class="btn-group">
-            <button class="btn-primary" onclick="exportJSON()">Export JSON</button>
-            <button class="btn-secondary" onclick="document.getElementById('file-input').click()">Load JSON</button>
-            <input type="file" id="file-input" accept=".json" onchange="loadJSON(event)">
+        <div class="io-container">
+            <button class="btn-io" onclick="exportSquad()">Export JSON</button>
+            <button class="btn-io" onclick="document.getElementById('file-input').click()">Load JSON</button>
+            <input type="file" id="file-input" accept=".json" onchange="importSquad(event)">
         </div>
     </div>
 
-    <!-- Right Panel: Card Preview -->
-    <div class="panel card-preview">
-        <div class="player-header">
-            <div class="player-name" id="card-name">Striker Legend</div>
-            <div class="player-role" id="card-position">Inner Midfielder</div>
-            <div class="star-rating" id="card-stars">⭐⭐⭐⭐⭐ 5.2 Stars</div>
+    <!-- Active Workspace -->
+    <div class="workspace">
+        <!-- Input Form Configuration Panels -->
+        <div class="panel editor-panel">
+            <h2>Player Card Editor</h2>
+            <div class="input-row">
+                <div>
+                    <label for="pNameInput">Player Name</label>
+                    <input type="text" id="pNameInput" oninput="syncFormToData()">
+                </div>
+                <div>
+                    <label for="pPosSelect">Preferred Position</label>
+                    <select id="pPosSelect" onchange="syncFormToData()">
+                        <option value="Midfielder">Midfielder</option>
+                        <option value="Defender">Defender</option>
+                        <option value="Winger">Winger</option>
+                        <option value="Forward">Forward</option>
+                        <option value="Keeper">Keeper</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="sliders-grid" id="slidersContainer"></div>
+            <button class="btn-del" onclick="deleteActivePlayer()">Delete Active Player</button>
         </div>
-        
-        <div class="chart-wrapper">
-            <canvas id="radarChart"></canvas>
+
+        <div class="panel card-preview">
+            <div class="card-face">
+                <div class="avatar-placeholder"></div>
+                <div class="p-name" id="cardName">Charly Master</div>
+                <div class="p-role" id="cardRole">Midfielder</div>
+                <div class="star-container" id="cardStars">⭐⭐⭐⭐☆</div>
+                
+                <div class="quick-metrics">
+                    <div class="metric-box">
+                        <div>Rating</div>
+                        <div id="quickRating">3.5 Stars</div>
+                    </div>
+                    <div class="metric-box">
+                        <div>Role Focus</div>
+                        <div id="quickRole">Midfielder</div>
+                    </div>
+                    <div class="metric-box">
+                        <div>Form Factor</div>
+                        <div>Hattrick Style</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <canvas id="skillsRadar"></canvas>
+            </div>
         </div>
     </div>
 </div>
 
 <script>
     let radarChart;
-    const skillKeys = ['playmaking', 'defending', 'scoring', 'winger', 'passing', 'goalkeeping', 'stamina'];
+    const skillList = ['scoring', 'passing', 'playmaking', 'defending', 'winger', 'goalkeeping'];
+    
+    // Official Hattrick structural vocabulary index definitions
+    const hattrickDenominations = {
+        1: "Disastrous", 2: "Poor", 3: "Wretched", 4: "Weak", 5: "Inadequate",
+        6: "Passable", 7: "Solid", 8: "Excellent", 9: "Formidable", 10: "Outstanding",
+        11: "Brilliant", 12: "Magnificent", 13: "World Class", 14: "Supernatural",
+        15: "Magical", 16: "Utopian", 17: "Titanic", 18: "Extra-Terrestrial",
+        19: "Mythical", 20: "Divine"
+    };
 
-    // Initialize Chart.js
+    // Initial default squad state mock mirroring your image reference exactly
+    let squadData = [
+        {
+            id: "1700000000000",
+            name: "Charly Master",
+            position: "Midfielder",
+            skills: { scoring: 12, passing: 14, playmaking: 15, defending: 8, winger: 10, goalkeeping: 2 }
+        }
+    ];
+    let activePlayerId = "1700000000000";
+
     window.onload = function() {
-        const ctx = document.getElementById('radarChart').getContext('2d');
+        buildControlSliders();
+        initRadarGraph();
+        refreshRosterMenu();
+        loadActivePlayerProfile(activePlayerId);
+    };
+
+    function buildControlSliders() {
+        const container = document.getElementById('slidersContainer');
+        container.innerHTML = '';
+        
+        skillList.forEach(skill => {
+            const camelName = skill.charAt(0).toUpperCase() + skill.slice(1);
+            const sliderWrapper = document.createElement('div');
+            sliderWrapper.className = 'slider-group';
+            sliderWrapper.innerHTML = `
+                <div class="slider-labels">
+                    <span class="stat-name">${camelName} — <span class="stat-desc" id="${skill}Desc">Passable</span></span>
+                </div>
+                <div class="slider-row">
+                    <input type="range" id="${skill}Slider" min="1" max="20" value="6" oninput="syncFormToData()">
+                    <span class="num-counter" id="${skill}Num">6 / 20</span>
+                </div>
+            `;
+            container.appendChild(sliderWrapper);
+        });
+    }
+
+    function initRadarGraph() {
+        const ctx = document.getElementById('skillsRadar').getContext('2d');
         radarChart = new Chart(ctx, {
             type: 'radar',
             data: {
-                labels: ['Playmaking', 'Defending', 'Scoring', 'Winger', 'Passing', 'Keeper', 'Stamina'],
+                labels: ['Scoring', 'Passing', 'Playmaking', 'Defending', 'Winger', 'Goalkeeping'],
                 datasets: [{
-                    label: 'Player Skills',
-                    data:,
-                    backgroundColor: 'rgba(59, 130, 246, 0.2)',
-                    borderColor: 'rgba(30, 58, 138, 1)',
+                    data: [12, 14, 15, 8, 10, 2],
+                    backgroundColor: 'rgba(59, 130, 246, 0.15)',
+                    borderColor: 'rgba(59, 130, 246, 0.8)',
                     borderWidth: 2,
-                    pointBackgroundColor: 'rgba(30, 58, 138, 1)'
+                    pointBackgroundColor: '#3b82f6',
+                    pointRadius: 4
                 }]
             },
             options: {
                 scales: {
                     r: {
-                        angleLines: { display: true },
+                        grid: { color: '#334155' },
+                        angleLines: { color: '#334155' },
                         suggestedMin: 1,
                         suggestedMax: 20,
-                        ticks: { stepSize: 5 }
+                        ticks: { display: false },
+                        pointLabels: { color: '#94a3b8', font: { size: 11, weight: 'bold' } }
                     }
                 },
                 plugins: { legend: { display: false } }
             }
         });
-        updateCard();
-    };
+    }
 
-    // Calculate rating using fundamental Hattrick weighting concepts
-    function calculateStars(pos, skills) {
-        let rawRating = 0;
-        const staminaFactor = 0.5 + (skills.stamina / 40); // Stamina impacts deployment capacity
-
-        switch(pos) {
-            case 'Keeper':
-                rawRating = (skills.goalkeeping * 0.85) + (skills.defending * 0.15);
-                break;
-            case 'Defender':
-                rawRating = (skills.defending * 0.65) + (skills.playmaking * 0.15) + (skills.passing * 0.1) + (skills.stamina * 0.1);
-                break;
-            case 'Midfielder':
-                rawRating = ((skills.playmaking * 0.6) + (skills.passing * 0.15) + (skills.defending * 0.15)) * staminaFactor;
-                break;
-            case 'Winger':
-                rawRating = ((skills.winger * 0.5) + (skills.playmaking * 0.2) + (skills.passing * 0.15) + (skills.defending * 0.05)) * staminaFactor;
-                break;
-            case 'Forward':
-                rawRating = (skills.scoring * 0.6) + (skills.passing * 0.25) + (skills.winger * 0.05) + (skills.playmaking * 0.05);
-                break;
-        }
+    function refreshRosterMenu() {
+        const menu = document.getElementById('rosterList');
+        menu.innerHTML = '';
         
-        // Convert to a practical 1-10 star visualization range
-return Math.max(1, Math.min(10, (rawRating / 2))).toFixed(1);
-}
-function updateCard() {
-const name = document.getElementById('name').value || "Unnamed Player";
-const position = document.getElementById('position').value;
-// Read current slider states
-const skills = {};
-skillKeys.forEach(key => {
-skills[key] = parseInt(document.getElementById(key).value);
-document.getElementById(${key}-val).innerText = skills[key];
-});
-// UI Updates
-document.getElementById('card-name').innerText = name;
-document.getElementById('card-position').innerText = document.getElementById('position').options[document.getElementById('position').selectedIndex].text;
-const stars = calculateStars(position, skills);
-const starEmoji = "⭐".repeat(Math.round(stars / 2)) || "⭐";
-document.getElementById('card-stars').innerText = ${starEmoji} ${stars} Stars;
-// Update Radar Chart data targets dynamically
-if(radarChart) {
-radarChart.data.datasets[0].data = [
-skills.playmaking, skills.defending, skills.scoring,
-skills.winger, skills.passing, skills.goalkeeping, skills.stamina
-];
-radarChart.update();
-}
-}
-// Output raw configuration settings directly to disk
-function exportJSON() {
-const name = document.getElementById('name').value;
-const position = document.getElementById('position').value;
-const skills = {};
-skillKeys.forEach(key => {
-skills[key] = parseInt(document.getElementById(key).value);
-});
-const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ name, position, skills }, null, 2));
-const downloadAnchor = document.createElement('a');
-downloadAnchor.setAttribute("href", dataStr);
-downloadAnchor.setAttribute("download", ${name.replace(/\s+/g, '_')}_hattrick_card.json);
-document.body.appendChild(downloadAnchor);
-downloadAnchor.click();
-downloadAnchor.remove();
-}
-// Hydrate workspace directly from standard layout schema
-function loadJSON(event) {
-const file = event.target.files[0];
-if (!file) return;
-const reader = new FileReader();
-reader.onload = function(e) {
-try {
-const data = JSON.parse(e.target.result);
-if (data.name) document.getElementById('name').value = data.name;
-if (data.position) document.getElementById('position').value = data.position;
-if (data.skills) {
-skillKeys.forEach(key => {
-if (data.skills[key] !== undefined) {
-document.getElementById(key).value = data.skills[key];
-}
-});
-}
-updateCard();
-} catch (err) {
-alert("Error processing file. Please ensure it is a valid player JSON profile export.");
-}
-};
-reader.readAsText(file);
-}
+        squadData.forEach(player => {
+            const buttonItem = document.createElement('div');
+            buttonItem.className = `roster-item ${player.id === activePlayerId ? 'active' : ''}`;
+            buttonItem.onclick = () => loadActivePlayerProfile(player.id);
+            buttonItem.innerHTML = `
+                <span class="name-label">${player.name}</span>
+                <span class="role-label">${player.position}</span>
+            `;
+            menu.appendChild(buttonItem);
+        });
+    }
+
+    function loadActivePlayerProfile(id) {
+        activePlayerId = id;
+        const player = squadData.find(p => p.id === id);
+        if (!player) return;
+
+        document.getElementById('pNameInput').value = player.name;
+        document.getElementById('pPosSelect').value = player.position;
+
+        skillList.forEach(skill => {
+            const val = player.skills[skill];
+            document.getElementById(`${skill}Slider`).value = val;
+        });
+
+        refreshRosterMenu();
+        updateDisplayOutputs(player);
+    }
+
+    function syncFormToData() {
+        const player = squadData.find(p => p.id === activePlayerId);
+        if (!player) return;
+
+        player.name = document.getElementById('pNameInput').value || "Unnamed Player";
+        player.position = document.getElementById('pPosSelect').value;
+
+        skillList.forEach(skill => {
+            player.skills[skill] = parseInt(document.getElementById(`${skill}Slider`).value);
+        });
+
+        // Instantly sync roster names in sidebar while moving inputs
+        refreshRosterMenu();
+        updateDisplayOutputs(player);
+    }
+
+    function updateDisplayOutputs(player) {
+        // Form updates
+        document.getElementById('cardName').innerText = player.name;
+        document.getElementById('cardRole').innerText = player.position;
+        document.getElementById('quickRole').innerText = player.position;
+
+        // Dynamic text and counters matching slider position correctly
+        skillList.forEach(skill => {
+            const currentVal = player.skills[skill];
+            document.getElementById(`${skill}Num`).innerText = `${currentVal} / 20`;
+            document.getElementById(`${skill}Desc`).innerText = hattrickDenominations[currentVal];
+        });
+
+        // Exact match system logic mapping stars calculation
+        let scoreAggregator = 0;
+        switch(player.position) {
+            case 'Keeper': scoreAggregator = (player.skills.goalkeeping * 0.8) + (player.skills.defending * 0.2); break;
+            case 'Defender': scoreAggregator = (player.skills.defending * 0.7) + (player.skills.playmaking * 0.2) + (player.skills.passing * 0.1); break;
+            case 'Midfielder': scoreAggregator = (player.skills.playmaking * 0.6) + (player.skills.passing * 0.2) + (player.skills.defending * 0.15) + (player.skills.scoring * 0.05); break;
+            case 'Winger': scoreAggregator = (player.skills.winger * 0.6) + (player.skills.playmaking * 0.2) + (player.skills.passing * 0.2); break;
+            case 'Forward': scoreAggregator = (player.skills.scoring * 0.65) + (player.skills.passing * 0.25) + (player.skills.playmaking * 0.1); break;
+        }
+
+        const calculatedStars = Math.max(1.0, Math.min(5.0, (scoreAggregator / 3.2))).toFixed(1);
+        document.getElementById('quickRating').innerText = `${calculatedStars} Stars`;
+
+        // Render Star Emojis matching exactly
+        const visualStars = Math.round(calculatedStars);
+        document.getElementById('cardStars').innerText = "⭐".repeat(visualStars) + "☆".repeat(5 - visualStars);
+
+        // Sync visual matrix onto graph element layers
+        if (radarChart) {
+            radarChart.data.datasets[0].data = [
+                player.skills.scoring, player.skills.passing, player.skills.playmaking,
+                player.skills.defending, player.skills.winger, player.skills.goalkeeping
+            ];
+            radarChart.update();
+        }
+    }
+
+    function addNewPlayer() {
+        const uid = Date.now().toString();
+        const freshProfile = {
+            id: uid,
+            name: "New Friend",
+            position: "Midfielder",
+            skills: { scoring: 6, passing: 6, playmaking: 6, defending: 6, winger: 6, goalkeeping: 1 }
+        };
+        squadData.push(freshProfile);
+        loadActivePlayerProfile(uid);
+    }
+
+    function deleteActivePlayer() {
+        if (squadData.length <= 1) {
+            alert("Roster requires at least one active player card template.");
+            return;
+        }
+        squadData = squadData.filter(p => p.id !== activePlayerId);
+        loadActivePlayerProfile(squadData[0].id);
+    }
+
+    function exportSquad() {
+        const formattedUri = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(squadData, null, 2));
+        const hiddenElement = document.createElement('a');
+        hiddenElement.setAttribute("href", formattedUri);
+        hiddenElement.setAttribute("download", `squad_roster_profiles.json`);
+        document.body.appendChild(hiddenElement);
+        hiddenElement.click();
+        hiddenElement.remove();
+    }
+
+    function importSquad(event) {
+        const selectedFile = event.target.files;
+        if (!selectedFile) return;
+
+        const fileReader = new FileReader();
+        fileReader.onload = function(e) {
+            try {
+                const parsedObject = JSON.parse(e.target.result);
+                if (Array.isArray(parsedObject) && parsedObject.length > 0) {
+                    squadData = parsedObject;
+                    loadActivePlayerProfile(squadData[0].id);
+                } else {
+                    alert("Invalid roster file formatting standard configuration.");
+                }
+            } catch (err) {
+                alert("Critical sorting execution mismatch processing JSON data stream.");
+            }
+        };
+        fileReader.readAsText(selectedFile);
+    }
+</script>
+</body>
+</html>
