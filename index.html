@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hattrick Friend Card Creator</title>
+    <!-- Chart.js for the Radar Chart -->
+    <script src="https://jsdelivr.net"></script>
+    <style>
+        :root {
+            --bg-color: #f3f4f6;
+            --card-bg: #ffffff;
+            --primary: #1e3a8a;
+            --primary-light: #3b82f6;
+            --text: #1f2937;
+            --border: #e5e7eb;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+        .container {
+            max-width: 1000px;
+            width: 100%;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        @media (max-width: 768px) {
+            .container { grid-template-columns: 1fr; }
+        }
+        .panel {
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        h2 { margin-top: 0; color: var(--primary); border-bottom: 2px solid var(--border); padding-bottom: 10px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; font-weight: bold; margin-bottom: 5px; font-size: 0.9rem; }
+        input[type="text"], select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 1rem;
+        }
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 12px;
+        }
+        .slider-container label { width: 100px; margin-bottom: 0; }
+        input[type="range"] { flex: 1; accent-color: var(--primary-light); }
+        .val-badge {
+            width: 30px;
+            text-align: center;
+            font-weight: bold;
+            background: var(--bg-color);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+        }
+        .btn-group { display: flex; gap: 10px; margin-top: 20px; }
+        button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+            font-size: 0.95rem;
+        }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: #111827; }
+        .btn-secondary { background: #9ca3af; color: white; }
+        .btn-secondary:hover { background: #4b5563; }
+        #file-input { display: none; }
+        
+        /* Card Display Styling */
+        .card-preview {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+        .player-header { margin-bottom: 20px; }
+        .player-name { font-size: 2rem; font-weight: 800; margin: 0; color: var(--primary); }
+        .player-role { font-size: 1.1rem; color: #6b7280; font-weight: 500; text-transform: uppercase; letter-spacing: 1px; }
+        .star-rating {
+            font-size: 1.5rem;
+            color: #f59e0b;
+            margin-top: 5px;
+            font-weight: bold;
+        }
+        .chart-wrapper {
+            width: 100%;
+            max-width: 360px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- Left Panel: Controls -->
+    <div class="panel">
+        <h2>Player Attributes</h2>
+        
+        <div class="form-group">
+            <label for="name">Friend's Name</label>
+            <input type="text" id="name" value="Striker Legend" oninput="updateCard()">
+        </div>
+
+        <div class="form-group">
+            <label for="position">Preferred Position</label>
+            <select id="position" onchange="updateCard()">
+                <option value="Keeper">Keeper</option>
+                <option value="Defender">Central Defender</option>
+                <option value="Midfielder" selected>Inner Midfielder</option>
+                <option value="Winger">Winger</option>
+                <option value="Forward">Forward</option>
+            </select>
+        </div>
+
+        <h3 style="font-size: 1rem; margin-top: 20px; color: #4b5563;">Skills (1 - 20)</h3>
+        
+        <div class="skills-list">
+            <div class="slider-container">
+                <label>Playmaking</label>
+                <input type="range" id="playmaking" min="1" max="20" value="14" oninput="updateCard()">
+                <span class="val-badge" id="playmaking-val">14</span>
+            </div>
+            <div class="slider-container">
+                <label>Defending</label>
+                <input type="range" id="defending" min="1" max="20" value="10" oninput="updateCard()">
+                <span class="val-badge" id="defending-val">10</span>
+            </div>
+            <div class="slider-container">
+                <label>Scoring</label>
+                <input type="range" id="scoring" min="1" max="20" value="8" oninput="updateCard()">
+                <span class="val-badge" id="scoring-val">8</span>
+            </div>
+            <div class="slider-container">
+                <label>Winger</label>
+                <input type="range" id="winger" min="1" max="20" value="12" oninput="updateCard()">
+                <span class="val-badge" id="winger-val">12</span>
+            </div>
+            <div class="slider-container">
+                <label>Passing</label>
+                <input type="range" id="passing" min="1" max="20" value="11" oninput="updateCard()">
+                <span class="val-badge" id="passing-val">11</span>
+            </div>
+            <div class="slider-container">
+                <label>Goalkeeping</label>
+                <input type="range" id="goalkeeping" min="1" max="20" value="1" oninput="updateCard()">
+                <span class="val-badge" id="goalkeeping-val">1</span>
+            </div>
+            <div class="slider-container">
+                <label>Stamina</label>
+                <input type="range" id="stamina" min="1" max="20" value="15" oninput="updateCard()">
+                <span class="val-badge" id="stamina-val">15</span>
+            </div>
+        </div>
+
+        <div class="btn-group">
+            <button class="btn-primary" onclick="exportJSON()">Export JSON</button>
+            <button class="btn-secondary" onclick="document.getElementById('file-input').click()">Load JSON</button>
+            <input type="file" id="file-input" accept=".json" onchange="loadJSON(event)">
+        </div>
+    </div>
+
+    <!-- Right Panel: Card Preview -->
+    <div class="panel card-preview">
+        <div class="player-header">
+            <div class="player-name" id="card-name">Striker Legend</div>
+            <div class="player-role" id="card-position">Inner Midfielder</div>
+            <div class="star-rating" id="card-stars">⭐⭐⭐⭐⭐ 5.2 Stars</div>
+        </div>
+        
+        <div class="chart-wrapper">
+            <canvas id="radarChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<script>
+    let radarChart;
+    const skillKeys = ['playmaking', 'defending', 'scoring', 'winger', 'passing', 'goalkeeping', 'stamina'];
+
+    // Initialize Chart.js
+    window.onload = function() {
+        const ctx = document.getElementById('radarChart').getContext('2d');
+        radarChart = new Chart(ctx, {
+            type: 'radar',
+            data: {
+                labels: ['Playmaking', 'Defending', 'Scoring', 'Winger', 'Passing', 'Keeper', 'Stamina'],
+                datasets: [{
+                    label: 'Player Skills',
+                    data:,
+                    backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                    borderColor: 'rgba(30, 58, 138, 1)',
+                    borderWidth: 2,
+                    pointBackgroundColor: 'rgba(30, 58, 138, 1)'
+                }]
+            },
+            options: {
+                scales: {
+                    r: {
+                        angleLines: { display: true },
+                        suggestedMin: 1,
+                        suggestedMax: 20,
+                        ticks: { stepSize: 5 }
+                    }
+                },
+                plugins: { legend: { display: false } }
+            }
+        });
+        updateCard();
+    };
+
+    // Calculate rating using fundamental Hattrick weighting concepts
+    function calculateStars(pos, skills) {
+        let rawRating = 0;
+        const staminaFactor = 0.5 + (skills.stamina / 40); // Stamina impacts deployment capacity
+
+        switch(pos) {
+            case 'Keeper':
+                rawRating = (skills.goalkeeping * 0.85) + (skills.defending * 0.15);
+                break;
+            case 'Defender':
+                rawRating = (skills.defending * 0.65) + (skills.playmaking * 0.15) + (skills.passing * 0.1) + (skills.stamina * 0.1);
+                break;
+            case 'Midfielder':
+                rawRating = ((skills.playmaking * 0.6) + (skills.passing * 0.15) + (skills.defending * 0.15)) * staminaFactor;
+                break;
+            case 'Winger':
+                rawRating = ((skills.winger * 0.5) + (skills.playmaking * 0.2) + (skills.passing * 0.15) + (skills.defending * 0.05)) * staminaFactor;
+                break;
+            case 'Forward':
+                rawRating = (skills.scoring * 0.6) + (skills.passing * 0.25) + (skills.winger * 0.05) + (skills.playmaking * 0.05);
+                break;
+        }
+        
+        // Convert to a practical 1-10 star visualization range
+return Math.max(1, Math.min(10, (rawRating / 2))).toFixed(1);
+}
+function updateCard() {
+const name = document.getElementById('name').value || "Unnamed Player";
+const position = document.getElementById('position').value;
+// Read current slider states
+const skills = {};
+skillKeys.forEach(key => {
+skills[key] = parseInt(document.getElementById(key).value);
+document.getElementById(${key}-val).innerText = skills[key];
+});
+// UI Updates
+document.getElementById('card-name').innerText = name;
+document.getElementById('card-position').innerText = document.getElementById('position').options[document.getElementById('position').selectedIndex].text;
+const stars = calculateStars(position, skills);
+const starEmoji = "⭐".repeat(Math.round(stars / 2)) || "⭐";
+document.getElementById('card-stars').innerText = ${starEmoji} ${stars} Stars;
+// Update Radar Chart data targets dynamically
+if(radarChart) {
+radarChart.data.datasets[0].data = [
+skills.playmaking, skills.defending, skills.scoring,
+skills.winger, skills.passing, skills.goalkeeping, skills.stamina
+];
+radarChart.update();
+}
+}
+// Output raw configuration settings directly to disk
+function exportJSON() {
+const name = document.getElementById('name').value;
+const position = document.getElementById('position').value;
+const skills = {};
+skillKeys.forEach(key => {
+skills[key] = parseInt(document.getElementById(key).value);
+});
+const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ name, position, skills }, null, 2));
+const downloadAnchor = document.createElement('a');
+downloadAnchor.setAttribute("href", dataStr);
+downloadAnchor.setAttribute("download", ${name.replace(/\s+/g, '_')}_hattrick_card.json);
+document.body.appendChild(downloadAnchor);
+downloadAnchor.click();
+downloadAnchor.remove();
+}
+// Hydrate workspace directly from standard layout schema
+function loadJSON(event) {
+const file = event.target.files[0];
+if (!file) return;
+const reader = new FileReader();
+reader.onload = function(e) {
+try {
+const data = JSON.parse(e.target.result);
+if (data.name) document.getElementById('name').value = data.name;
+if (data.position) document.getElementById('position').value = data.position;
+if (data.skills) {
+skillKeys.forEach(key => {
+if (data.skills[key] !== undefined) {
+document.getElementById(key).value = data.skills[key];
+}
+});
+}
+updateCard();
+} catch (err) {
+alert("Error processing file. Please ensure it is a valid player JSON profile export.");
+}
+};
+reader.readAsText(file);
+}
